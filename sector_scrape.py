@@ -11,18 +11,20 @@ html = response.content
 soup = BeautifulSoup(html, "html.parser")
 
 # Because there are some annoying numbers within the cell, I'll have to get rid of them. Potentially have to just take [:-1] to remove the ending white space.
-external_span = soup.find('span')
-unwanted = external_span.find('span')
-unwanted.soup.extract()
+
 
 list_sectors = []
 for cell in soup.findAll("a", class_="list-group-item"):
     # .text is needed or we'll have the stupid tag.
+    span_tag = cell.span.extract()
     cell = cell.text
     cell = cell.replace(u'\xa0', u' ')
     list_sectors.append(cell)
 
 print list_sectors
+
+for sector in list_sectors:
+    print url + '/' + sector
 '''
 for row in soup.findAll('tr')[1:]:
     data_cells = []
