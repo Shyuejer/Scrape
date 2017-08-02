@@ -21,36 +21,62 @@ for cell in soup.findAll("a", class_="list-group-item"):
     cell = cell.text
     cell = cell.replace(u'\xa0', u' ')
     list_sectors.append(cell)
-# These are my requests counters. 
-good_counter = 0
-bad_counter = 0  
+
 
 # Checking if website links work
+def request_count():
+    # These are my requests counters. 
+    good_counter = 0
+    bad_counter = 0  
+    for sector in list_sectors:
+        sector = sector[:-1].lower()
+        sector = sector.split(" ")
+        sector = "-".join(sector)
+        sector = sector.replace('&','and')
+        request = requests.head(url_2 + '/' + sector)
+        if request.status_code == 200:
+            print('Website exists for %s' %sector)
+            good_counter += 1
+        else:
+            print('Website does not exist for %s' %sector)
+            bad_counter += 1
+
+
+    print "Number of good counters: %i" %good_counter
+    print "Number of bad counters: %i" %bad_counter        
+
+# The exciting part: fetching data from 50 pages!
+# First I will make a list of websites to visit
+list_of_sites = []
+
 for sector in list_sectors:
     sector = sector[:-1].lower()
     sector = sector.split(" ")
     sector = "-".join(sector)
     sector = sector.replace('&','and')
-    request = requests.head(url_2 + '/' + sector)
-    if request.status_code == 200:
-        print('Website exists for %s' %sector)
-        good_counter += 1
-    else:
-        print('Website does not exist for %s' %sector)
-        bad_counter += 1
+    list_of_sites.append(url_2+'/'+sector)
 
-
-print "Number of good counters: %i" %good_counter
-print "Number of bad counters: %i" %bad_counter        
-
-'''
-for row in soup.findAll('tr')[1:]:
-    data_cells = []
-    for cell in row.findAll('td'):
-        text = cell.text.replace('&nbsp;', '')
-        data_cells.append(text)
-    data_rows.append(data_cells)
-'''    
-
-# Now I need to check if all the websites are in fact functioning
-
+def fetch():
+    for url in list_of_sites:
+        print "accesing " + url
+        response = requests.get(url)
+        if response.status_code == 200:
+            html = response.content
+            soup = BeautifulSoup(html, "html.parser")
+            data_rows = []    
+            header_cells = []
+            for cell in soup.findAll('th'):
+                # .text is needed or we'll have the stupid tag.
+                header_cells.append(cell.text)
+            
+            for row in soup.findAll('tr')[1:]:
+                data_cells = []
+                for cell in row.findAll('td'):
+                    text = cell.text.replace('&nbsp;', '')
+                    data_cells.append(text)
+                data_rows.append(data_cells)
+            
+            outfile = open("C:\\Users\\sj\\Dropbox\\Investing\\isaham.data\\%s.csv" % url[27:], "wb")
+            writer = csv.writer(outfile)
+            writer.writerow(header_cells)
+            writer.writerows(data_rows)
